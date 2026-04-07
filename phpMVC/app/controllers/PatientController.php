@@ -7,26 +7,23 @@
 
         }
         public function store() {
-            if (!isset($_POST['name']) || !isset($_POST['gender'])) {
+            if (!isset($_POST['MaSV']) || !isset($_POST['TenSV']) || !isset($_POST['Lop']) || !isset($_POST['Khoa'])) {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=add');
                 exit;
             }
 
-            $name = trim($_POST['name']);
-            $gender = trim($_POST['gender']);
+            $MaSV = trim($_POST['MaSV']);
+            $TenSV = trim($_POST['TenSV']);
+            $Lop = trim($_POST['Lop'] );
+            $Khoa = trim($_POST['Khoa']);
 
-            if ($name === '' || $gender === '') {
+            if ($MaSV === '' || $TenSV === '') {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=add&error=save_failed');
                 exit;
             }
 
-            if (strcasecmp($gender, 'Male') === 0) {
-                $gender = '0';
-            } else if (strcasecmp($gender, 'Female') === 0) {
-                $gender = '1';
-            }
 
-            $patient = new Patient(null, $name, $gender);
+            $patient = new Patient($MaSV, $TenSV, $Lop, $Khoa);
 
             $patientService = new PatientService();
             $saved = $patientService->addPatient($patient);
@@ -40,14 +37,14 @@
             exit;
         }
 
-        public function edit($id) {
-            if (!isset($id)) {
-                echo "ID khong hop le";
+        public function edit($MaSV) {
+            if (!isset($MaSV)) {
+                echo "Ma SV khong hop le";
                 return;
             }
 
             $patientService = new PatientService();
-            $patient = $patientService->getPatientById($id);
+            $patient = $patientService->getPatientById($MaSV);
 
             if ($patient === null) {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=home&error=patient_not_found');
@@ -58,32 +55,28 @@
         }
 
         public function update() {
-            if (!isset($_POST['id']) || !isset($_POST['name']) || !isset($_POST['gender'])) {
+            if (!isset($_POST['MaSV']) || !isset($_POST['TenSV']) || !isset($_POST['Lop']) || !isset($_POST['Khoa']) ) {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=home&error=update_failed');
                 exit;
             }
 
-            $id = (int) $_POST['id'];
-            $name = trim($_POST['name']);
-            $gender = trim($_POST['gender']);
+            $MaSV = trim($_POST['MaSV']);
+            $TenSV = trim($_POST['TenSV']);
+            $Lop = trim($_POST['Lop']);
+            $Khoa = trim($_POST['Khoa']);
 
-            if (strcasecmp($gender, 'Male') === 0) {
-                $gender = '0';
-            } else if (strcasecmp($gender, 'Female') === 0) {
-                $gender = '1';
-            }
 
-            if ($id <= 0 || $name === '' || ($gender !== '0' && $gender !== '1')) {
-                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=edit&id=' . $id . '&error=update_failed');
+            if ($MaSV === '' || $TenSV === '' || $Lop === '' || $Khoa === '') {
+                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=edit&MaSV=' . urlencode($MaSV) . '&error=update_failed');
                 exit;
             }
 
-            $patient = new Patient($id, $name, $gender);
+            $patient = new Patient($MaSV, $TenSV, $Lop, $Khoa);
             $patientService = new PatientService();
             $updated = $patientService->updatePatient($patient);
 
             if (!$updated) {
-                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=edit&id=' . $id . '&error=update_failed');
+                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=edit&MaSV=' . urlencode($MaSV) . '&error=update_failed');
                 exit;
             }
 
@@ -91,14 +84,14 @@
             exit;
         }
 
-        public function delete($id) {
-            if (!isset($id)) {
-                echo "ID khong hop le";
+        public function delete($MaSV) {
+            if (!isset($MaSV) || $MaSV === '') {
+                echo "MaSV khong hop le";
                 return;
             }
 
             $patientService = new PatientService();
-            $patient = $patientService->getPatientById($id);
+            $patient = $patientService->getPatientById($MaSV);
 
             if ($patient === null) {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=home&error=patient_not_found');
@@ -109,22 +102,22 @@
         }
 
         public function destroy() {
-            if (!isset($_POST['id'])) {
+            if (!isset($_POST['MaSV'])) {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=home&error=delete_failed');
                 exit;
             }
 
-            $id = (int) $_POST['id'];
-            if ($id <= 0) {
+            $MaSV = trim($_POST['MaSV']);
+            if ($MaSV === '') {
                 header('Location: ' . DOMAIN . 'public/index.php?controller=home&error=delete_failed');
                 exit;
             }
 
             $patientService = new PatientService();
-            $deleted = $patientService->deletePatientById($id);
+            $deleted = $patientService->deletePatientById($MaSV);
 
             if (!$deleted) {
-                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=delete&id=' . $id . '&error=delete_failed');
+                header('Location: ' . DOMAIN . 'public/index.php?controller=patient&action=delete&MaSV=' . urlencode($MaSV) . '&error=delete_failed');
                 exit;
             }
 
@@ -132,25 +125,5 @@
             exit;
         }
 
-        public function getPatientById($id) {
-            $dbConnection = new DBConnection("localhost", "root", "", "testdb");
-
-            if ($dbConnection != null) {
-                $conn = $dbConnection->getConnection();
-
-                if($conn != null) {
-                     $sql = "select * from patient where id = :id";
-                    $stmt = $conn->prepare($sql);
-                    if($stmt->rowCount() > 0) {
-                        $stmt->execute(['id' => $id]);
-                        $row = $stmt->fetch();
-                        $patient = new Patient($row['id'], $row['name'], $row['gender']);
-                    }
-                }
-            }
-
-        }
-
-       
     }
 ?>

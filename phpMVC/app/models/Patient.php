@@ -1,31 +1,38 @@
 <?php
 
 class Patient {
-        private $id;
-        private $fullName;
-        private $gender;
+        private $MaSV;
+        private $TenSV;
+        private $Lop;
 
-        public function __construct($id, $fullName, $gender) {
-        $this->id = $id;
-        $this->fullName = $fullName;
-        $this->gender = $gender;
+        private $Khoa;
+
+        public function __construct($MaSV, $TenSV, $Lop, $Khoa) {
+        $this->MaSV = $MaSV;
+        $this->TenSV = $TenSV;
+        $this->Lop = $Lop;
+        $this->Khoa = $Khoa;
 
     }
 
-        public function getId() {
-        return $this->id;
+        public function getMaSV() {
+        return $this->MaSV;
     }
 
-        public function getFullName() {
-        return $this->fullName;
+        public function getTenSV() {
+        return $this->TenSV;
     }
 
-        public function getGender() {
-            return $this->gender;
+        public function getLop() {
+            return $this->Lop;
         }
 
-        public function setFullName($fullName) {
-             $this->fullName = $fullName;
+        public function getKhoa() {
+            return $this->Khoa;
+        }
+
+        public function setTenSV($TenSV) {
+             $this->TenSV = $TenSV;
         }
 
   

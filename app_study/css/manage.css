@@ -1,0 +1,139 @@
+:root {
+  --bg: #f3efe2;
+  --ink: #1f2937;
+  --line: #dbcdb0;
+  --accent: #0f766e;
+  --danger: #b91c1c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: linear-gradient(160deg, #f6f2e7, #efe0bf);
+}
+
+.layout {
+  width: min(1000px, 95vw);
+  margin: 22px auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar h1 {
+  margin: 0;
+}
+
+.back-link {
+  color: #fff;
+  background: #334155;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.back-link:hover {
+  filter: brightness(1.08);
+}
+
+.panel {
+  margin-top: 16px;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.row > * {
+  flex: 1 1 180px;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+input,
+textarea,
+select,
+button {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-family: inherit;
+}
+
+button {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+.cards-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.card-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffcf6;
+  padding: 12px;
+}
+
+.card-item .q {
+  font-weight: 700;
+}
+
+.card-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.status-box {
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .row > * {
+    flex: 1 1 100%;
+  }
+}

@@ -3,65 +3,26 @@
 require_once APP_ROOT . "/app/models/Patient.php";
 
 class PatientService {
-    private function getExistingTableName($conn) {
-        $tableCandidates = ['patient', 'patients'];
-
-        foreach ($tableCandidates as $candidate) {
-            $checkStmt = $conn->prepare("SHOW TABLES LIKE :tableName");
-            $checkStmt->execute(['tableName' => $candidate]);
-            if ($checkStmt->fetchColumn() !== false) {
-                return $candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private function getExistingNameColumn($conn, $tableName) {
-        $nameCandidates = ['fullName', 'name'];
-
-        foreach ($nameCandidates as $candidate) {
-            $colStmt = $conn->prepare("SHOW COLUMNS FROM {$tableName} LIKE :columnName");
-            $colStmt->execute(['columnName' => $candidate]);
-            if ($colStmt->fetchColumn() !== false) {
-                return $candidate;
-            }
-        }
-
-        return null;
+    private function getConn() {
+        $dbConnection = new DBConnection(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+        return $dbConnection->getConnection();
     }
 
     public function getAllPatients () {
         $patients = [];
 
-        
-        $dbConnection = new DBConnection("localhost", "root", "", "testdb");
+        $conn = $this->getConn();
 
-        if ($dbConnection != null) {
-            $conn = $dbConnection->getConnection();
+        if($conn != null) {
+            try {
+                $sql = "SELECT MaSV, TenSV, Lop, Khoa FROM sinhvien ORDER BY MaSV ASC";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute();
 
-            if($conn != null) {
-                try {
-                    $tableName = $this->getExistingTableName($conn);
-
-                    if ($tableName === null) {
-                        return $patients;
-                    }
-
-                    $sql = "select * from {$tableName}";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->execute();
-
-                    while($row = $stmt->fetch()) {
-                        $fullName = $row['fullName'] ?? ($row['name'] ?? '');
-                        $gender = $row['gender'] ?? '';
-                        $patient = new Patient($row['id'], $fullName, $gender);
-                        $patients[] = $patient;
-                    }
-                } catch (PDOException $e) {
-                    return $patients;
+                while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $patients[] = new Patient($row['MaSV'], $row['TenSV'], $row['Lop'], $row['Khoa']);
                 }
-
+            } catch (PDOException $e) {
                 return $patients;
             }
         }
@@ -70,137 +31,82 @@ class PatientService {
     }
 
     public function addPatient($patient) {
-        $dbConnection = new DBConnection("localhost", "root", "", "testdb");
-        if ($dbConnection != null) {
-            $conn = $dbConnection->getConnection();
+        $conn = $this->getConn();
+        if($conn != null) {
+            try {
+                $sql = "INSERT INTO sinhvien (MaSV, TenSV, Lop, Khoa) VALUES (:MaSV, :TenSV, :Lop, :Khoa)";
+                $stmt = $conn->prepare($sql);
 
-            if($conn != null) {
-               try {
-                    $tableName = $this->getExistingTableName($conn);
-
-                    if ($tableName === null) {
-                        return false;
-                    }
-
-                    $nameColumn = $this->getExistingNameColumn($conn, $tableName);
-
-                    if ($nameColumn === null) {
-                        return false;
-                    }
-
-                    $name = $patient->getFullName();
-                    $gender = $patient->getGender();
-                    $sql = "INSERT INTO {$tableName} ({$nameColumn}, gender) VALUES (:name, :gender)";
-                    $stmt = $conn->prepare($sql);
-
-                    return $stmt->execute(['name' => $name, 'gender' => $gender]);
-               } catch (PDOException $e) {
-                    return false;
-               }
+                return $stmt->execute([
+                    'MaSV' => $patient->getMaSV(),
+                    'TenSV' => $patient->getTenSV(),
+                    'Lop' => $patient->getLop(),
+                    'Khoa' => $patient->getKhoa()
+                ]);
+            } catch (PDOException $e) {
+                return false;
             }
         }
 
         return false;
     }
 
-    public function getPatientById($id) {
-        $dbConnection = new DBConnection("localhost", "root", "", "testdb");
-
-        if ($dbConnection == null) {
-            return null;
-        }
-
-        $conn = $dbConnection->getConnection();
+    public function getPatientById($MaSV) {
+        $conn = $this->getConn();
 
         if ($conn == null) {
             return null;
         }
 
         try {
-            $tableName = $this->getExistingTableName($conn);
-            if ($tableName === null) {
-                return null;
-            }
-
-            $nameColumn = $this->getExistingNameColumn($conn, $tableName);
-            if ($nameColumn === null) {
-                return null;
-            }
-
-            $sql = "SELECT id, {$nameColumn} AS fullName, gender FROM {$tableName} WHERE id = :id LIMIT 1";
+            $sql = "SELECT MaSV, TenSV, Lop, Khoa FROM sinhvien WHERE MaSV = :MaSV LIMIT 1";
             $stmt = $conn->prepare($sql);
-            $stmt->execute(['id' => $id]);
+            $stmt->execute(['MaSV' => $MaSV]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$row) {
                 return null;
             }
 
-            return new Patient($row['id'], $row['fullName'], $row['gender']);
+            return new Patient($row['MaSV'], $row['TenSV'], $row['Lop'], $row['Khoa']);
         } catch (PDOException $e) {
             return null;
         }
     }
 
     public function updatePatient($patient) {
-        $dbConnection = new DBConnection("localhost", "root", "", "testdb");
-
-        if ($dbConnection == null) {
-            return false;
-        }
-
-        $conn = $dbConnection->getConnection();
+        $conn = $this->getConn();
 
         if ($conn == null) {
             return false;
         }
 
         try {
-            $tableName = $this->getExistingTableName($conn);
-            if ($tableName === null) {
-                return false;
-            }
-
-            $nameColumn = $this->getExistingNameColumn($conn, $tableName);
-            if ($nameColumn === null) {
-                return false;
-            }
-
-            $sql = "UPDATE {$tableName} SET {$nameColumn} = :name, gender = :gender WHERE id = :id";
+            $sql = "UPDATE sinhvien SET TenSV = :TenSV, Lop = :Lop, Khoa = :Khoa WHERE MaSV = :MaSV";
             $stmt = $conn->prepare($sql);
 
             return $stmt->execute([
-                'name' => $patient->getFullName(),
-                'gender' => $patient->getGender(),
-                'id' => $patient->getId()
+                'TenSV' => $patient->getTenSV(),
+                'Lop' => $patient->getLop(),
+                'Khoa' => $patient->getKhoa(),
+                'MaSV' => $patient->getMaSV()
             ]);
         } catch (PDOException $e) {
             return false;
         }
     }
 
-    public function deletePatientById($id) {
-        $dbConnection = new DBConnection("localhost", "root", "", "testdb");
-
-        if ($dbConnection == null) {
-            return false;
-        }
-
-        $conn = $dbConnection->getConnection();
+    public function deletePatientById($MaSV) {
+        $conn = $this->getConn();
 
         if ($conn == null) {
             return false;
         }
 
         try {
-            $tableName = $this->getExistingTableName($conn);
-            if ($tableName === null) {
-                return false;
-            }
-
-            $sql = "DELETE FROM {$tableName} WHERE id = :id";
+            $sql = "DELETE FROM sinhvien WHERE MaSV = :MaSV";
             $stmt = $conn->prepare($sql);
-            return $stmt->execute(['id' => $id]);
+            return $stmt->execute(['MaSV' => $MaSV]);
         } catch (PDOException $e) {
             return false;
         }
